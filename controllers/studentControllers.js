@@ -95,6 +95,7 @@ export const queryStudents = (req, res) => {
 	const value = req.body;
 	const setValue = Object.values(value);
 	let sortedStudent = [...setValue];
+	console.log(typeof sortedStudent);
 	if (search) {
 		sortedStudent = sortedStudent.filter((student) => {
 			return student.firstname.startsWith(search);

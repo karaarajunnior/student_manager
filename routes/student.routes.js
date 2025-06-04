@@ -19,13 +19,12 @@ router
 	.put(editStudent)
 	.delete(removeStudent);
 router.route("/students").get(getStudents).post(addStudent);
-router.get("/students/query", queryStudents);
 
 // Student login
 router.post("/students/login", loginStudent);
 
 // Search
-router.get("/students/search/name", queryStudents);
+router.get("/query", queryStudents);
 router.get("/students/count/all", getStudentCount);
 
 export default router;
