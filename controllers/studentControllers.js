@@ -71,30 +71,31 @@ export const removeStudent = (req, res) => {
 
 //update student
 export const editStudent = (req, res) => {
-	const value = req.body;
-	const ID = req.params.id;
-	const setKey = Object.keys(value);
-	const setValue = Object.values(value);
+	const value = [
+		req.body.firstname,
+		req.body.lastname,
+		req.body.tel,
+		req.body.password,
+	];
 
-	setKey.length === 0
-		? res.send("no fields to update")
-		: dbprofile.query(QUERIES.update, [...setValue, ID], (err, results) => {
-				try {
-					console.log("here");
-					return res.status(200).json({ message: `student updated` });
-				} catch (error) {
-					console.log("here 2");
-					return res.status(400).json({ ERROR: "failed to update student" });
-				}
-		  });
+	dbprofile.query(QUERIES.update, [...value, req.params.id], (err, results) => {
+		try {
+			console.log("here");
+			return res.status(200).json({ message: `student updated` });
+		} catch (error) {
+			console.log("here 2");
+			return res.status(400).json({ ERROR: "failed to update student" });
+		}
+	});
 };
 
 // //search student by name
 export const queryStudents = (req, res) => {
-	const { search, limit } = req.query;
 	const value = req.body;
 	const setValue = Object.values(value);
 	let sortedStudent = [...setValue];
+
+	const { search, limit } = req.query;
 	console.log(typeof sortedStudent);
 	if (search) {
 		sortedStudent = sortedStudent.filter((student) => {
@@ -107,7 +108,7 @@ export const queryStudents = (req, res) => {
 	if (sortedStudent.length < 1) {
 		return res.json({ success: true, data: [sortedStudent] });
 	}
-	console.log(sortedStudent);
+
 	return res.send(sortedStudent);
 };
 
