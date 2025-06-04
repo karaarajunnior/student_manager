@@ -1,23 +1,36 @@
-import cors from "cors";
 import dbprofile from "../config/db.js";
-import queries from "./queries/queries.js";
-const { select, insert, update, deleteStudent, byid } = queries;
+import queries from "../queries/student.queries.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import Promisify from "node:util";
+import QUERIES from "../queries/student.queries.js";
+
+//creating tables
+dbprofile.query(queries.tab, (err, result) => {
+	err ? console.log(err.stack) : console.log("table created");
+});
+
+dbprofile.query(queries.LecturerTable, (err, result) => {
+	err ? console.log(err.stack) : console.log("table created");
+});
+
+//get all students
 export const getStudents = (req, res) => {
-	dbprofile.query(select, (err, rows, fields) => {
-		if (err) {
+	console.log(res);
+	dbprofile.query(queries.select, (err, data) => {
+		try {
+			return res.status(200).json({ data: data });
+		} catch (error) {
 			console.log(err);
-		} else {
-			res.send(rows);
-			console.log(fields);
 		}
 	});
 };
 
 //getstudent using id
 export const getStudent = (req, res) => {
-	dbprofile.query(byid, [req.params.id], (err, rows, fields) => {
+	dbprofile.query(queries.byid, [req.params.id], (err, data) => {
 		try {
-			return res.status(200).send(rows, fields);
+			return res.status(200).json(data);
 		} catch (error) {
 			return res.status(500).json({ error: "failed to fetch student" });
 		}
@@ -25,28 +38,34 @@ export const getStudent = (req, res) => {
 };
 
 //add student
-export const addStudent = (req, res) => {
-	const { id, firstname, lastname, tel } = req.body;
+export const addStudent = async (req, res) => {
+	const { id, firstname, lastname, tel, password } = req.body;
 
-	dbprofile.query(insert, [id, firstname, lastname, tel], (err, results) => {
-		if (!id || !firstname || !lastname || !tel) {
-			return res.status(401).json({ message: "all fields are mandatory" });
-		} else {
-			return res.json({ message: "student added successfully" });
-		}
-	});
+	if (!id || !firstname || !lastname || !tel || !password) {
+		return res.status(400).json({ error: "all fields are mandatory" });
+	}
+
+	const hashedPassword = await bcrypt.hash(password, 8);
+
+	dbprofile.query(
+		queries.insert,
+		[id, firstname, lastname, tel, hashedPassword],
+		(error, result) => {
+			try {
+				return res.status(401).json({ msg: "created" });
+			} catch (error) {
+				res.status(500).json(error);
+			}
+		},
+	);
 };
-
-update.replace("strin");
 
 //delete student
 export const removeStudent = (req, res) => {
-	dbprofile.query(deleteStudent, [req.params.id], (err, results) => {
-		if (req.body.id !== req.params.id) {
-			return res.send("deleted");
-		} else {
-			return res.json({ ERROR: "Student with that id doesnot exist" });
-		}
+	dbprofile.query(QUERIES.deleteStudent, [req.params.id], (err, results) => {
+		err
+			? res.json({ ERROR: "Student with that id doesnot exist" })
+			: res.send("deleted");
 	});
 };
 
@@ -56,21 +75,68 @@ export const editStudent = (req, res) => {
 	const ID = req.params.id;
 	const setKey = Object.keys(value);
 	const setValue = Object.values(value);
-	if (setKey.length === 0) {
-		return res.send("no fields to update");
-	} else {
-		try {
-			dbprofile.query(update, [...setValue, ID], (err, results) => {
+
+	setKey.length === 0
+		? res.send("no fields to update")
+		: dbprofile.query(QUERIES.update, [...setValue, ID], (err, results) => {
 				try {
-					console.log("here")
+					console.log("here");
 					return res.status(200).json({ message: `student updated` });
 				} catch (error) {
-					console.log("here 2")
+					console.log("here 2");
 					return res.status(400).json({ ERROR: "failed to update student" });
 				}
-			});
-		} catch (error) {
-			console.log(error);
-		}
+		  });
+};
+
+// //search student by name
+export const queryStudents = (req, res) => {
+	const { search, limit } = req.query;
+	const value = req.body;
+	const setValue = Object.values(value);
+	let sortedStudent = [...setValue];
+	if (search) {
+		sortedStudent = sortedStudent.filter((student) => {
+			return student.firstname.startsWith(search);
+		});
 	}
+	if (limit) {
+		sortedStudent = sortedStudent.slice(0, Number(limit));
+	}
+	if (sortedStudent.length < 1) {
+		return res.json({ success: true, data: [sortedStudent] });
+	}
+	console.log(sortedStudent);
+	return res.send(sortedStudent);
+};
+
+//number of students
+export const getStudentCount = (req, res) => {
+	const result = dbprofile.query(QUERIES.COUNT);
+	res.json({ result: JSON.stringify(result) });
+};
+//student login
+export const loginStudent = async (req, res) => {
+	const { tel } = req.body;
+
+	dbprofile.query(queries.StudentLogin, tel, (error, data) => {
+		if (error) return res.json("login error");
+		if (data[0].length > 0) {
+			bcrypt.compare(req.body.password, data[0].password, (err, result) => {
+				if (err) return res.json("password compare error");
+				if (result) {
+					return res.json("success");
+				} else {
+					const name = req.body.firstname;
+					const token = jwt.sign({ name }, process.env.ACCESS_TOKEN, {
+						expiresIn: "1h",
+					});
+					res.cookie("token", token);
+					return res.send("password matched unsuccessful");
+				}
+			});
+		} else {
+			return res.json("tel doesnt exist");
+		}
+	});
 };

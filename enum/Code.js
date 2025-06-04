@@ -1,0 +1,7 @@
+export const Code = {
+	OK: 200,
+	BAD_REQUEST: 401,
+	INTERNAL_SERVER_ERROR: 500,
+	NOT_FOUND: 404,
+	CREATED: 201,
+};

@@ -28,7 +28,7 @@ app.get("/product/query", (req, res) => {
 	const { search, limit } = req.query;
 	let sortedproducts = [...products];
 	if (search) {
-		sortedproducts = sortedproducts.filter((product) => {
+		sortedroducts = sortedproducts.filter((product) => {
 			return product.name.startsWith(search);
 		});
 
