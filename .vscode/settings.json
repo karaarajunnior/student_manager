@@ -1,0 +1,6 @@
+{
+	"prettier.enableDebugLogs": true,
+	"prettier.useTabs": true,
+	"prettier.withNodeModules": true,
+	"prettier.vueIndentScriptAndStyle": true
+}

@@ -1,0 +1,15 @@
+export const  Code =()=> {
+	OK = 200,
+	BAD_REQUEST = 401,
+	INTERNAL_SERVER_ERROR = 500,
+	NOT_FOUND = 404,
+	CREATED = 201,
+}
+
+export const Status = () => {
+	OK = "OK",
+	BAD_REQUEST = "BAD_REQUEST",
+	INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR",
+	NOT_FOUND = "NOT_FOUND",
+	CREATED = "CREATED",
+}
